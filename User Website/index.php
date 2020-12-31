@@ -1,24 +1,24 @@
 <?php
   require('connection_file.php');
+  session_start();
  
-  $sql_get_total_hotel_details="SELECT id,lodge_name,lodge_location FROM local_admin  
+  $sql_get_total_hotel_details="SELECT id,lodge_name,lodge_location,image_01,image_02,image_03,image_04
+   FROM local_admin JOIN room_images
+  ON local_admin.id=room_images.local_admin_id
   WHERE (TIME(NOW()) BETWEEN opening_time AND closing_time) AND lodge_status=1";
-  $sql_get_total_rooms="SELECT COUNT(ROOM_NO) AS total_rooms,min(rate_hr) AS minimum_rate FROM ROOMS WHERE user_id IS NULL AND LOCAL_ADMIN_ID=";
+
+  $sql_get_total_rooms="SELECT COUNT(ROOM_NO) AS total_rooms,min(rate_hr) AS minimum_rate FROM ROOMS 
+  WHERE user_id IS NULL AND LOCAL_ADMIN_ID=";
   
- 
-  //defining variables
-  // $search_location="none";
-  // $room_type="none";
-  // $no_of_guests=0;
-  // crate an array with select tag elements
-  $types = array('single','double','twin','tripple','single deluxe','double deluxe');
+  // crate an array with room types
+    $types = array('single','double','twin','tripple','single deluxe','double deluxe');
   //$db_connection->set_charset('utf8');
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
   
-<head>
+  <head >
     <title>Project Name</title>
     <meta charset="utf-8" http-equiv="content-type" content="text/html">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -40,12 +40,49 @@
     <link rel="stylesheet" href="css/rangeslider.css">
 
     <link rel="stylesheet" href="css/style.css">
-    
+    <style>
+            #button_top {
+            display: inline-block;
+            background-color: #FF9800;
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            border-radius: 4px;
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            transition: background-color .3s, 
+              opacity .5s, visibility .5s;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1000;
+          }
+          #button_top::after {
+            content: "\f077";
+            font-family: FontAwesome;
+            font-weight: normal;
+            font-style: normal;
+            font-size: 2em;
+            line-height: 50px;
+            color: #fff;
+          }
+          #button_top:hover {
+            cursor: pointer;
+            background-color: #333;
+          }
+          #button_top:active {
+            background-color: #555;
+          }
+          #button_top.show {
+            opacity: 1;
+            visibility: visible;
+          }
+    </style>
   </head>
   <body>
  
   <div class="site-wrap">
-
+          
     <div class="site-mobile-menu">
       <div class="site-mobile-menu-header">
         <div class="site-mobile-menu-close mt-3">
@@ -55,7 +92,7 @@
       <div class="site-mobile-menu-body"></div>
     </div>
     
-    <header class="site-navbar container py-0 bg-white" role="banner">
+    <header class="site-navbar container py-0 bg-white fixed-top" role="banner">
 
       <div class="container"> 
         <div class="row align-items-center">
@@ -64,18 +101,35 @@
             <h1 class="mb-0 site-logo"><a href="#" class="text-black mb-0">Project<span class="text-primary">Name</span>  </a></h1>
           </div>
           <div class="col-12 col-md-10 d-none d-xl-block">
-            <nav class="site-navigation position-relative text-right" role="navigation">
+            <nav class="site-navigation position-relative text-right" role="navigation" >
 
               <ul class="site-menu js-clone-nav mr-auto d-none d-lg-block">
-                <li class="active"><a href="index.html">Home</a></li>
-                <li><a href="#about">About Us</a></li>
-                <li><a href="#contact">Contact</a></li>
+                <li class="active"><a href="#">Home</a></li>
+                <li><a href="aboutus.php">About Us</a></li>
+                <li><a href="contact.php">Contact</a></li>
                 <li class="has-children border-left pl-xl-4">
                   <a href="#">Account</a>
                   <ul class="dropdown">
-                    <li><a href="user login.html">Login As User</a></li>
+                  <?php
+                      if(isset($_SESSION['user_id']))
+                      {
+
+                      ?>
+                      <li><a href="view_booked_details.php">Booked Details</a></li>
+                      <li><a href="history.php">History</a></li>
+                      <li><a href="settings.php">Settings</a></li>
+                      <li><a href="logout.php">Logout</a></li>
+                     <?php
+                      }
+                      else
+                      {
+                        ?>
+                    <li><a href="user login.php">Login As User</a></li>
                     <li><a href="admin login.html">Login As Admin</a></li>
-                    <li><a href="registration.html">Register</a></li>
+                    <li><a href="registration.php">Register</a></li>
+                    <?php
+                      }
+                  ?>
                   </ul>
                 </li>
               </ul>
@@ -87,7 +141,8 @@
         </div>
       </div> 
     </header>  
-    
+    <!-- Back to top button -->
+    <a id="button_top"></a>
     <div class="site-blocks-cover overlay" style="background-image: url(images/room\ image\ 004.jpg);" data-aos="fade" data-stellar-background-ratio="0.5">
         <div class="container">
           <div class="row align-items-center justify-content-center text-center">
@@ -100,14 +155,14 @@
                 </div>
               </div>
   
-              <div class="form-search-wrap" data-aos="fade-up" data-aos-delay="200">
-                <form  action="" method="post">
+              <div class="form-search-wrap" data-aos="fade-up" data-aos-delay="200" id="list_of_lodges">
+                <form  action="index.php#list_of_lodges" method="post">
 
                 <?php
-
+                  //checks whether any of the submit buttons search or apply filter has been clicked
                   if(isset($_POST['submit']) && ($_POST['submit'] == 'Apply Filter' || $_POST['submit'] == 'Search'))
                   {
-
+                    
                   
                 ?>
                       <div class="row align-items-center">
@@ -129,10 +184,10 @@
                           <div class="select-wrap">
                             <span class="icon"><span class="icon-keyboard_arrow_down"></span></span>
                             <?php
-                                //print select tag with the help of an array.
+                                //print room types with the help of an array.
                                 echo '<select name="room_type" class="form-control">';
                                 foreach($types as $option) {
-                                  // pritnt option values and if current option value matches with the 
+                                  // pritnt room types and if current room type value matches with the 
                                   //previously selected value then set selected
                                     echo '<option value="'.$option.'"'.(strcmp($option,$_POST["room_type"])==0?' selected="selected"':'').'>'.$option.'</option>';
                                 }
@@ -190,7 +245,23 @@
                       ?>
                 </form>
               </div>
-  
+              <?php
+                 if(isset($_SESSION['reg_status'])) //show a message in home page if the registration is successful.
+                 {
+                   //$_SESSION['user_id']
+                 ?>
+                  <div class="col-md-12 mt-5 pt-5">
+                    <div class="col-sm-6 mt-5 mx-auto">
+                      <div class="alert alert-primary alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                          <strong>You have registered successfully !</strong>
+                      </div>
+                    </div>
+                  </div>
+                  <?php
+                   unset($_SESSION['reg_status']);
+                 }
+               ?>   
             </div>
           </div>
         </div>
@@ -214,36 +285,54 @@
                             $no_of_guests=$_POST['no_of_guests'];
                             $room_type=$_POST['room_type'];
 
+
                           // sql query for retreiving lodges with given location
-                          $sql_search_lodges_home="SELECT id,ucase(lodge_location) AS lodge_location,lodge_name,COUNT(ROOM_NO) AS total_rooms,rate_hr AS rate 
-                          FROM local_admin JOIN ROOMS ON local_admin.id=rooms.local_admin_id 
-                          WHERE user_id IS NULL AND type='$room_type' AND lodge_status=1 AND lodge_location=lcase('$search_location')
-                          GROUP BY LOCAL_ADMIN_ID HAVING SUM(CAPACITY)>=$no_of_guests 
-                          ORDER BY capacity";
+                          $sql_search_lodges_home=$db_connection->prepare("SELECT id,
+                          ucase(lodge_location) AS lodge_location,lodge_name,COUNT(ROOM_NO) AS total_rooms,
+                          rate_hr AS rate,image_01,image_02,image_03,image_04 
+                          FROM local_admin JOIN ROOMS ON local_admin.id=rooms.local_admin_id
+                          JOIN room_images ON room_images.local_admin_id=local_admin.id 
+                          WHERE user_id IS NULL AND type=? AND lodge_status=1 AND lodge_location=lcase(?)
+                          GROUP BY rooms.LOCAL_ADMIN_ID HAVING SUM(CAPACITY)>=? 
+                          ORDER BY capacity");
+
+                          //binding parameters
+                          $sql_search_lodges_home->bind_param("ssi",$room_type,$search_location,$no_of_guests);
+                          $sql_search_lodges_home->execute();
+
                           // excecute the above sql query and store result.
-                          $result_lodge_details=$db_connection->query($sql_search_lodges_home);
+                          $result_lodge_details=$sql_search_lodges_home->get_result();
                           
                             if ($result_lodge_details->num_rows > 0) // iff the result contains userful non empty results
                             {
                               // get each row
                               while($rows = $result_lodge_details->fetch_assoc()) 
                               {
+                                    
+                                if($rows['total_rooms']>0)
+                                {
                                   $local_admin_id=$rows['id'];// this is a must step for rating display
-
+                                  
+                                  //$_SESSION['total_rooms']=$rows['total_rooms'];
+                                  $href=$local_admin_id.'&type='.$room_type.'&guests='.$no_of_guests.'&total_rooms='.$rows['total_rooms'];
                     ?>
 
                           <div class="col-lg-6">
                             <div class="d-block d-md-flex listing vertical">
-                              <a href="about.html" class="img d-block" style="background-image: url('images/room\ image\ 001.jpg')"></a>
+                            <?php
+                              $image_url="images//room images//$rows[image_01]"; 
+                            ?>
+                              <a href="dashboard.php?lodge_id=<?php echo $href;?>" class="img d-block" 
+                             style="background-image: url('<?php echo $image_url?>')"></a>
                               <div class="lh-content">
                                 <span class="category">
 
-                                  <?php echo $rows['total_rooms']." Rooms"; ?>
+                                  <?php echo $rows['total_rooms']." Rooms";?>
 
                                 </span>
                                 <span class="category">Starting - ₹ <?php echo $rows['rate']; ?>/hr</span>
                                 <!-- <a href="#" class="bookmark"><span class="icon-heart"></span></a> -->
-                                <h3><a href="about.html">
+                                <h3><a href="dashboard.php?lodge_id=<?php echo $href;?>">
                                     <?php echo $rows['lodge_name']; ?>
                                 </a></h3>
                                 <address>
@@ -252,18 +341,19 @@
                                 
                                 <p class="mb-0">
                                 <?php
-                                // $sql_hotel_reviewed_or_not="SELECT COUNT(local_admin_id) FROM REVIEW WHERE local_admin_id=$local_admin_id
-                                // GROUP BY  local_admin_id";
+                                
+                                 $sql_get_rating=$db_connection->prepare("SELECT AVG(RATING) AS RATING,COUNT(RATING) AS REVIEWERS
+                                 FROM REVIEW WHERE LOCAL_ADMIN_ID=?
+                                GROUP BY local_admin_id");
 
-                                // $result_hotel_reviewed_or_not=$db_connection->query($sql_hotel_reviewed_or_not);
+                                  //binding parameters
+                                  $sql_get_rating->bind_param("i",$local_admin_id);
+                                  $sql_get_rating->execute();
 
-                                // while($rows_of_reviewed = $result_hotel_reviewed_or_not->fetch_assoc()) 
-                                // {
-                                 $sql_get_rating="SELECT AVG(RATING) AS RATING,COUNT(RATING) AS REVIEWERS
-                                 FROM REVIEW WHERE LOCAL_ADMIN_ID=$local_admin_id
-                                GROUP BY local_admin_id";
+                                  // fetching results
+                                  $result_rating=$sql_get_rating->get_result();
 
-                                  $result_rating=$db_connection->query($sql_get_rating);
+                                  //converting into associative array
                                   $converted_array=$result_rating->fetch_assoc();
                                   $rating=(int)$converted_array['RATING'];
                                   for($i=1;$i<=$rating;$i++)
@@ -294,7 +384,8 @@
                             </div>
                           </div>
 
-                            <?php
+                            <?php 
+                                          }//closing of if 
                                            
                                         }//closing of while loop   
                                     }// closing of if 
@@ -302,27 +393,28 @@
                                     {
                                       ?>
                          
-                            <div class="alert alert-danger w-100">
-                              <strong>Sorry !</strong> No lodges match your selection criteria.
-                            </div>
+                                        <div class="alert alert-danger w-100 py-5 text-center">
+                                          <strong>Sorry !</strong> No lodges match your selection criteria.
+                                        </div>
                             
                             <?php              
                                      }
                                 } 
-                                else if($_POST['submit'] == 'Apply Filter') // filter serach button
+                                else if($_POST['submit'] =='Apply Filter') // filter serach button
                                 {
                                   // assign values of filter search block
                                 $search_location=$_POST['location_search'];
                                 $no_of_guests=$_POST['no_of_guests'];
                                 $room_type=$_POST['room_type'];
                                 $rate_slider=$_POST['slider'];
-                               
-                               // echo "\n\n".$rate_slider,$parking,$swimming_pool,$restaurent;
 
                                  // sql query for retreiving lodges with given location
-                                 $sql_search_lodges_home="SELECT id,ucase(lodge_location) AS lodge_location,lodge_name,COUNT(ROOM_NO) AS total_rooms,rate_hr AS rate 
+                                 $sql_search_lodges_home="SELECT id,ucase(lodge_location) AS lodge_location,lodge_name,
+                                 COUNT(ROOM_NO) AS total_rooms,rate_hr AS rate,image_01,image_02,image_03,image_04 
                                  FROM local_admin JOIN ROOMS ON local_admin.id=rooms.local_admin_id 
-                                 WHERE user_id IS NULL AND type='$room_type' AND rate_hr<=$rate_slider AND lodge_status=1 AND lodge_location=lcase('$search_location')";
+                                 JOIN room_images ON local_admin.id=room_images.local_admin_id
+                                 WHERE user_id IS NULL AND type='$room_type' AND rate_hr<=$rate_slider 
+                                 AND lodge_status=1 AND lodge_location=lcase('$search_location')";
 
                                   $associative_array['car_parking']=(isset($_POST['parking']))? 1 : 0 ;
                                   $associative_array['security']=(isset($_POST['security']))? 1 : 0 ;
@@ -334,7 +426,7 @@
                                       $sql_search_lodges_home.=" AND $key=$value "; // adds this field to sql command if it is checked ie 1
                                     }
                                 
-                                 $sql_search_lodges_home.=" GROUP BY LOCAL_ADMIN_ID HAVING SUM(CAPACITY)>=$no_of_guests 
+                                 $sql_search_lodges_home.=" GROUP BY rooms.LOCAL_ADMIN_ID HAVING SUM(CAPACITY)>=$no_of_guests 
                                  ORDER BY capacity";
                                  
                                 
@@ -348,13 +440,22 @@
                                       // get each row
                                       while($rows = $result_lodge_details->fetch_assoc()) 
                                       {
+                                        if($rows['total_rooms']>0)
+                                        {
                                           $local_admin_id=$rows['id']; // this is a must step for rating display
+                                          //$_SESSION['total_rooms']=$rows['total_rooms'];
+
+                                          $href=$local_admin_id.'&type='.$room_type.'&guests='.$no_of_guests.'&total_rooms='.$rows['total_rooms'];
                           ?>      
                           
 
                           <div class="col-lg-6">
                             <div class="d-block d-md-flex listing vertical">
-                              <a href="about.html" class="img d-block" style="background-image: url('images/room\ image\ 001.jpg')"></a>
+                            <?php
+                              $image_url="images//room images//$rows[image_01]"; 
+                            ?>
+                              <a href="dashboard.php?lodge_id=<?php echo $href;?>" class="img d-block" 
+                             style="background-image: url('<?php echo $image_url?>')"></a>
                               <div class="lh-content">
                                 <span class="category">
 
@@ -363,7 +464,7 @@
                                 </span>
                                 <span class="category">Starting - ₹ <?php echo $rows['rate']; ?>/hr</span>
                                 <!-- <a href="#" class="bookmark"><span class="icon-heart"></span></a> -->
-                                <h3><a href="about.html">
+                                <h3><a href="dashboard.php?lodge_id=<?php echo $href;?>">
                                     <?php echo $rows['lodge_name']; ?>
                                 </a></h3>
                                 <address>
@@ -408,7 +509,8 @@
                           </div>
                           
 
-                        <?php 
+                        <?php   
+                                          }//closing of if 
                                           
                                         }//closing of while loop   
                                     }// closing of if 
@@ -432,39 +534,55 @@
                                     </div>
                             
                          <?php              
-                                     }
-                              } 
-                              else
-                              {         
+                                }
+                        } 
+                        else
+                        {         
+                          $flag=0;
+                          $result_lodge_details=$db_connection->query($sql_get_total_hotel_details);
+                        
+                              if ($result_lodge_details->num_rows > 0) 
+                              { 
                                 
-                                $result_lodge_details=$db_connection->query($sql_get_total_hotel_details);
-
-                                    if ($result_lodge_details->num_rows > 0) 
-                                    {
-                                      // output data of each row
-                                      while($row = $result_lodge_details->fetch_assoc()) 
-                                      {
-                                          
-                                          $rooms_result=$db_connection->query($sql_get_total_rooms.$row['id']);
-                                        if($rooms_result->num_rows>0)
+                                        // output data of each row
+                                        while($row = $result_lodge_details->fetch_assoc()) 
                                         {
-                                            while($total_rows = $rooms_result->fetch_assoc()) 
-                                            {
+                                          //print_r($row);
+                                            $rooms_result=$db_connection->query($sql_get_total_rooms.$row['id']);
+                                            //echo $rooms_result;
+                                              if($rooms_result->num_rows>0)
+                                              {
+                                                
                                                 $local_admin_id=$row['id'];
-                          ?>    
+                                                //$row = $result_lodge_details->fetch_assoc();//must
+                                              
+                                          
+                                          while($total_rows = $rooms_result->fetch_assoc()) 
+                                          {
+                                            
+                                            //print_r($total_rows);
+                                              if($total_rows['total_rooms']>0)
+                                              {
+                                                $flag=1;
+                              ?>    
                 
                             <div class="col-lg-6">
                               <div class="d-block d-md-flex listing vertical">
-                                <a href="about.html" class="img d-block" style="background-image: url('images/room\ image\ 001.jpg')"></a>
+                              <?php
+                              $image_url="images//room images//$row[image_01]"; 
+                            ?>
+                              <a href="dashboard.php?lodge_id=<?php echo $local_admin_id?>" class="img d-block" 
+                             style="background-image: url('<?php echo $image_url?>')"></a>
+                               
                                 <div class="lh-content">
                                   <span class="category">
 
                                     <?php echo $total_rows['total_rooms']." Rooms"; ?>
 
                                   </span>
-                                  <span class="category">Starting - ₹ <?php echo $total_rows['minimum_rate']; ?>/hr</span>
+                                  <span class="category">Starting - ₹ <?php echo $total_rows['minimum_rate']>0? $total_rows['minimum_rate']: "0"; ?>/hr</span>
                                   <!-- <a href="#" class="bookmark"><span class="icon-heart"></span></a> -->
-                                  <h3><a href="about.html">
+                                  <h3><a href="dashboard.php?lodge_id=<?php echo $local_admin_id?>">
                                       <?php echo $row['lodge_name']; ?>
                                   </a></h3>
                                   <address>
@@ -507,12 +625,39 @@
                                 </div>
                               </div>
                             </div>
-                        <?php
+                        <?php         
+                                         } // and the closing of if 
+                                  else if($flag==0)
+                                  {
+                                    
+                                  ?>  
+                 
+                                    <div class="alert alert-danger w-100">
+                                      <strong>Sorry !</strong> No lodges available.
+                                    </div>
+                                    
+                                <?php     
+                                        goto outerloop;
+                                      }
                                     }// closing of while loop
 
-                                  } // and the closing of if 
+                                }
+                                else
+                                  {
+                                  ?>  
+                 
+                                    <div class="alert alert-danger w-100">
+                                      <strong>Sorry !</strong> No lodges available.
+                                    </div>
+                                    
+                                <?php     
+                                    break;
+                                   }  
 
-                              }//closing of while loop   
+
+                              }//closing of while loop  
+                              outerloop:
+                               
                             }// closing of if 
                           else 
                             {
@@ -529,19 +674,8 @@
                         ?>
               
             </div>
-
-            <div class="col-12 mt-5 text-center">
-              <div class="custom-pagination">
-                <span>1</span>
-                <a href="#">2</a>
-                <a href="#">3</a>
-                <span class="more-page">...</span>
-                <a href="#">10</a>
-              </div>
-            </div>
-
           </div>
-          <div class="col-lg-3 ml-auto" >
+          <div class="col-lg-3 ml-auto" style="border-left:1px solid rgba(112,128,144,0.3);" >
             <div style="position:sticky;top:0;">
             <div class="mb-5">
               <h3 class="h5 text-black mb-3">Filters</h3>
@@ -749,201 +883,12 @@
       </div>
     </div>
 
-    <div class="site-section bg-light" id="about">
-        <div class="container">
-          <div class="row justify-content-center mb-5">
-            <div class="col-md-7 text-center border-primary">
-              <h2 class="font-weight-light text-primary">Why Us</h2>
-              <p class="color-black-opacity-5">See Our Daily News &amp; Updates</p>
-            </div>
-          </div>
-          <div class="row mb-3 align-items-stretch">
-            <div class="col-md-6 col-lg-4 mb-4 mb-lg-4">
-              <div class="h-entry">
-                <img src="images/hero_1.jpg" alt="Image" class="img-fluid rounded">
-                <h2 class="font-size-regular"><a href="#" class="text-black">Many People Selling Online</a></h2>
-                <div class="meta mb-3">by Mark Spiker<span class="mx-1">&bullet;</span> Jan 18, 2019 <span class="mx-1">&bullet;</span> <a href="#">News</a></div>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus eligendi nobis ea maiores sapiente veritatis reprehenderit suscipit quaerat rerum voluptatibus a eius.</p>
-              </div> 
-            </div>
-            <div class="col-md-6 col-lg-4 mb-4 mb-lg-4">
-              <div class="h-entry">
-                <img src="images/hero_1.jpg" alt="Image" class="img-fluid rounded">
-                <h2 class="font-size-regular"><a href="#" class="text-black">Many People Selling Online</a></h2>
-                <div class="meta mb-3">by Mark Spiker<span class="mx-1">&bullet;</span> Jan 18, 2019 <span class="mx-1">&bullet;</span> <a href="#">News</a></div>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus eligendi nobis ea maiores sapiente veritatis reprehenderit suscipit quaerat rerum voluptatibus a eius.</p>
-              </div> 
-            </div>
-            <div class="col-md-6 col-lg-4 mb-4 mb-lg-4">
-              <div class="h-entry">
-                <img src="images/hero_1.jpg" alt="Image" class="img-fluid rounded">
-                <h2 class="font-size-regular"><a href="#" class="text-black">Many People Selling Online</a></h2>
-                <div class="meta mb-3">by Mark Spiker<span class="mx-1">&bullet;</span> Jan 18, 2019 <span class="mx-1">&bullet;</span> <a href="#">News</a></div>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus eligendi nobis ea maiores sapiente veritatis reprehenderit suscipit quaerat rerum voluptatibus a eius.</p>
-              </div>
-            </div>
-  
-            <div class="col-12 text-center mt-4">
-              <!-- <a href="#" class="btn btn-primary rounded py-2 px-4 text-white">View All Posts</a> -->
-            </div>
-          </div>
-        </div>
-      </div>
-    <div class="site-section bg-white">
-      <div class="container">
-
-        <div class="row justify-content-center mb-5">
-          <div class="col-md-7 text-center border-primary">
-            <h2 class="font-weight-light text-primary">Testimonials</h2>
-          </div>
-        </div>
-
-        <div class="slide-one-item home-slider owl-carousel">
-          <div>
-            <div class="testimonial">
-              <figure class="mb-4">
-                <img src="images/person_3.jpg" alt="Image" class="img-fluid mb-3">
-                <p>John Smith</p>
-              </figure>
-              <blockquote>
-                <p>&ldquo;Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur unde reprehenderit aperiam quaerat fugiat repudiandae explicabo animi minima fuga beatae illum eligendi incidunt consequatur. Amet dolores excepturi earum unde iusto.&rdquo;</p>
-              </blockquote>
-            </div>
-          </div>
-          <div>
-            <div class="testimonial">
-              <figure class="mb-4">
-                <img src="images/person_2.jpg" alt="Image" class="img-fluid mb-3">
-                <p>Christine Aguilar</p>
-              </figure>
-              <blockquote>
-                <p>&ldquo;Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur unde reprehenderit aperiam quaerat fugiat repudiandae explicabo animi minima fuga beatae illum eligendi incidunt consequatur. Amet dolores excepturi earum unde iusto.&rdquo;</p>
-              </blockquote>
-            </div>
-          </div>
-
-          <div>
-            <div class="testimonial">
-              <figure class="mb-4">
-                <img src="images/person_4.jpg" alt="Image" class="img-fluid mb-3">
-                <p>Robert Spears</p>
-              </figure>
-              <blockquote>
-                <p>&ldquo;Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur unde reprehenderit aperiam quaerat fugiat repudiandae explicabo animi minima fuga beatae illum eligendi incidunt consequatur. Amet dolores excepturi earum unde iusto.&rdquo;</p>
-              </blockquote>
-            </div>
-          </div>
-
-          <div>
-            <div class="testimonial">
-              <figure class="mb-4">
-                <img src="images/person_5.jpg" alt="Image" class="img-fluid mb-3">
-                <p>Bruce Rogers</p>
-              </figure>
-              <blockquote>
-                <p>&ldquo;Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur unde reprehenderit aperiam quaerat fugiat repudiandae explicabo animi minima fuga beatae illum eligendi incidunt consequatur. Amet dolores excepturi earum unde iusto.&rdquo;</p>
-              </blockquote>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-    
+ 
+    <!-- Footer part here -->
     <?php
-              // echo"hadkfjsdklfj";
-              // //echo $_POST['submit'];
-              //   if(isset($_POST['submit'])&& ($_POST['submit']=='Send'))
-              //   {
-              //     //echo"settedd";
-                 
-           
-             ?>              
-                <!-- <div class="alert alert-success w-100">
-                  <strong>Success !</strong> We will contact you soon !.
-                </div> -->
-            <?php       
-                // }
-                // else
-                // {
-                //   //echo"this must work";
-                // }
-            ?>
-   
-    <div class="newsletter bg-primary py-5" id="contact">
-        <div class="container">
-          <div class="row align-items-center">
-            <div class="col-md-6">
-              <h2>Write to us</h2>
-              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
-            </div>
-            <div class="col-md-6">
-              
-              <form action="" method="post">
-                <div class="form-group">
-                  <input type="email" class="form-control" placeholder="Email" name="customer_email" required>
-                </div>
-                <div class="form-group">
-                  <textarea name="contact_message" id="contact_message" 
-                  cols="30" rows="5" class="form-control"
-                  placeholder="Your message here:" required></textarea>
-                </div>
-                 <div class="form-group">
-                   <input type="submit" value="Send" class="btn btn-white">
-                 </div>
-              </form>
-              
-            </div>
-          </div>
-        </div>
-      </div>
-    
-    
-      <footer class="site-footer" >
-        <div class="container">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="row text-center">
-                <div class="col-md-4">
-                  <h2 class="footer-heading mb-4">About</h2>
-                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Provident rerum unde possimus molestias dolorem fuga, illo quis fugiat!</p>
-                </div>
-                
-                <div class="col-md-4">
-                  <h2 class="footer-heading mb-4">Navigations</h2>
-                  <ul class="list-unstyled">
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Testimonials</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                  </ul>
-                </div>
-                <div class="col-md-4">
-                  <h2 class="footer-heading mb-4">Follow Us</h2>
-                  <a href="#" class="pl-0 pr-3"><span class="icon-facebook"></span></a>
-                  <a href="#" class="pl-3 pr-3"><span class="icon-twitter"></span></a>
-                  <a href="#" class="pl-3 pr-3"><span class="icon-instagram"></span></a>
-                  <a href="#" class="pl-3 pr-3"><span class="icon-linkedin"></span></a>
-                </div>
-              </div>
-            </div>
-            
-          </div>
-          <div class="row pt-5 mt-5 text-center">
-            <div class="col-md-12">
-              <div class="border-top pt-5">
-              <p>
-              <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-              Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved
-              <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-              </p>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-      </footer>
-  </div>
+    include("footer.php");
+    ?>
+ </div>
 
   <script src="js/jquery-3.3.1.min.js"></script>
   <script src="js/jquery-migrate-3.0.1.min.js"></script>
@@ -959,7 +904,24 @@
   <script src="js/rangeslider.min.js"></script>
 
   <script src="js/main.js"></script>
+  <script>
+  var btn = $('#button_top');
 
+$(window).scroll(function() {
+  if ($(window).scrollTop() > 300) {
+    btn.addClass('show');
+  } else {
+    btn.removeClass('show');
+  }
+});
+
+btn.on('click', function(e) {
+  e.preventDefault();
+  $('html, body').animate({scrollTop:0}, '300');
+});
+
+
+  </script>
 <?php
 $db_connection->close(); 
 ?>
